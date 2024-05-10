@@ -1,10 +1,9 @@
 const fs = require('fs');
-const inquirer = require('inquirer');
-const { Circle, Square, Triangle } = require('./lib/shapes');
-const { createSVG } = require('./lib/svgGenerator'); // You'll need to create this function
 
-// Function to prompt user for input
+// Use dynamic import to import inquirer
 async function promptUser() {
+  const { default: inquirer } = await import('inquirer');
+
   const answers = await inquirer.prompt([
     {
       type: 'input',
@@ -24,7 +23,7 @@ async function promptUser() {
     },
     {
       type: 'list',
-      name: 'shape',
+      name: 'shapeType',
       message: 'Choose a shape:',
       choices: ['circle', 'triangle', 'square']
     },
@@ -38,24 +37,38 @@ async function promptUser() {
   return answers;
 }
 
+const { Circle, Square, Triangle } = require('./lib/shapes');
 async function main() {
-  try {
-    // Prompt user for input
-    const { text, textColor, shape, shapeColor } = await promptUser();
+    try {
+        // Prompt user for input
+        const { text, textColor, shapeType, shapeColor } = await promptUser();
 
-    // Generate SVG based on user input
-    const svg = createSVG(text, textColor, shape, shapeColor);
+        let svg;
+        switch (shapeType.toLowerCase()) {
+            case 'circle':
+                const circle = new Circle(shapeColor);
+                svg = circle.render();
+                break;
+            case 'square':
+                const square = new Square(100, shapeColor, text, textColor);
+                svg = square.render();
+                break;
+            case 'triangle':
+                const triangle = new Triangle(100, shapeColor, text, textColor);
+                svg = triangle.render();
+                break;
+            default:
+                throw new Error('Invalid shape type');
+        }
 
-    // Write SVG to file
-    fs.writeFileSync('logo.svg', svg);
+        // Write SVG to file
+        fs.writeFileSync('logo.svg', svg);
 
-    console.log('Generated logo.svg');
-  } catch (err) {
-    console.error('An error occurred:', err);
-  }
+        console.log('Generated logo.svg');
+    } catch (err) {
+        console.error('An error occurred:', err);
+    }
 }
 
 // Call the main function to start the application
 main();
-
-module.exports = { promptUser }; 
